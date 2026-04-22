@@ -54,12 +54,12 @@ header {
   font-size: 1.375rem;
   font-weight: 700;
   letter-spacing: 0;
-  color: var(--fg);
+  color: #B8430A;
   text-decoration: none;
   margin-bottom: 0.2rem;
 }
 
-a.site-name:hover { color: var(--accent); }
+a.site-name:hover { color: #B8430A; }
 
 .tagline {
   font-family: 'Libre Baskerville', Georgia, serif;
