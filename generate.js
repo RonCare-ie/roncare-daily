@@ -202,8 +202,11 @@ function generatePostHTML(date, topic, content) {
 <body>
   <header>
     <div class="container">
-      <a href="../index.html" class="site-name">RonCare Daily</a>
-      <p class="tagline">For those who care.</p>
+      <div>
+        <a href="../index.html" class="site-name">RonCare Daily</a>
+        <p class="tagline">For those who care.</p>
+      </div>
+      <img src="../icon.png" alt="RonCare" class="header-icon" style="mix-blend-mode:multiply;">
     </div>
   </header>
 
@@ -263,8 +266,11 @@ function generateIndexHTML(allPosts, latestTopic, latestContent) {
 <body>
   <header>
     <div class="container">
-      <span class="site-name">RonCare Daily</span>
-      <p class="tagline">For those who care.</p>
+      <div>
+        <span class="site-name">RonCare Daily</span>
+        <p class="tagline">For those who care.</p>
+      </div>
+      <img src="icon.png" alt="RonCare" class="header-icon" style="mix-blend-mode:multiply;">
     </div>
   </header>
 

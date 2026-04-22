@@ -48,6 +48,18 @@ header {
   margin-bottom: 3rem;
 }
 
+header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header .header-icon {
+  height: 56px;
+  width: auto;
+  flex-shrink: 0;
+}
+
 .site-name {
   display: block;
   font-family: 'Libre Baskerville', Georgia, serif;
