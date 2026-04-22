@@ -1,0 +1,14 @@
+{
+  "name": "roncare-daily",
+  "version": "1.0.0",
+  "description": "Automated daily news briefing for family carers, powered by Anthropic AI",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate.js",
+    "generate:force": "node generate.js --force"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.0"
+  }
+}
