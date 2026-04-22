@@ -178,6 +178,30 @@ a.site-name:hover { color: var(--accent); }
   color: var(--accent-hover);
 }
 
+/* ── Article body ── */
+
+.article-body p {
+  margin-bottom: 1.5em;
+}
+
+.article-body p:last-of-type {
+  margin-bottom: 0;
+}
+
+.article-beginning {
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: var(--fg);
+}
+
+.article-end {
+  font-style: italic;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  margin-top: 0.5rem;
+}
+
 /* ── Archive ── */
 
 .archive {
