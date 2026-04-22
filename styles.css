@@ -1,6 +1,8 @@
 /* RonCare Daily — styles.css
    Clean, minimal, readable. No images. Mobile-first. */
 
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -48,10 +50,10 @@ header {
 
 .site-name {
   display: block;
-  font-family: var(--font-sans);
+  font-family: 'Libre Baskerville', Georgia, serif;
   font-size: 1.375rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: 0;
   color: var(--fg);
   text-decoration: none;
   margin-bottom: 0.2rem;
@@ -60,10 +62,11 @@ header {
 a.site-name:hover { color: var(--accent); }
 
 .tagline {
-  font-family: var(--font-sans);
+  font-family: 'Libre Baskerville', Georgia, serif;
+  font-style: italic;
   font-size: 0.8125rem;
   color: var(--muted);
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 /* ── Post meta ── */
