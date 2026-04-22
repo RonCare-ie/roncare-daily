@@ -223,6 +223,10 @@ ${articleBodyHTML(content)}
     </article>
   </main>
 
+  <div class="banner-wrap">
+    <img src="../banner.png" alt="Ron Care Companion" class="bottom-banner">
+  </div>
+
   <footer>
     <div class="container">
       <p>RonCare Daily publishes automated daily briefings using AI-assisted research. Always verify information from original sources before acting on it.</p>

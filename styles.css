@@ -257,6 +257,19 @@ a.site-name:hover { color: #B8430A; }
   color: var(--accent);
 }
 
+/* ── Bottom banner ── */
+
+.banner-wrap {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.bottom-banner {
+  max-width: 100%;
+  width: 600px;
+  mix-blend-mode: multiply;
+}
+
 /* ── Footer ── */
 
 footer {
