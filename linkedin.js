@@ -44,29 +44,30 @@ const shareText = `📰 RonCare Daily — ${heading}\n\n${preview}\n\nRead the f
 
 const body = {
   author: `urn:li:person:${PERSON_URN}`,
-  lifecycleState: 'PUBLISHED',
-  specificContent: {
-    'com.linkedin.ugc.ShareContent': {
-      shareCommentary: { text: shareText },
-      shareMediaCategory: 'ARTICLE',
-      media: [{
-        status: 'READY',
-        originalUrl: postUrl,
-        title: { text: `RonCare Daily — ${heading}` },
-        description: { text: preview },
-      }],
+  commentary: shareText,
+  visibility: 'PUBLIC',
+  distribution: {
+    feedDistribution: 'MAIN_FEED',
+    targetEntities: [],
+    thirdPartyDistributionChannels: [],
+  },
+  content: {
+    article: {
+      source: postUrl,
+      title: `RonCare Daily — ${heading}`,
+      description: preview,
     },
   },
-  visibility: {
-    'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-  },
+  lifecycleState: 'PUBLISHED',
+  isReshareDisabledByAuthor: false,
 };
 
-const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+const res = await fetch('https://api.linkedin.com/rest/posts', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${ACCESS_TOKEN}`,
     'Content-Type': 'application/json',
+    'LinkedIn-Version': '202401',
     'X-Restli-Protocol-Version': '2.0.0',
   },
   body: JSON.stringify(body),
