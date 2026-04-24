@@ -43,7 +43,7 @@ const preview  = rawText.length > 300 ? rawText.slice(0, 297) + '…' : rawText;
 const shareText = `📰 RonCare Daily — ${heading}\n\n${preview}\n\nRead the full briefing → ${postUrl}`;
 
 const body = JSON.stringify({
-  author: `urn:li:person:${PERSON_URN}`,
+  author: `urn:li:organization:${PERSON_URN}`,
   commentary: shareText,
   visibility: 'PUBLIC',
   distribution: {
