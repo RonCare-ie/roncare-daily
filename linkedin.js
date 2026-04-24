@@ -7,8 +7,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const ACCESS_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
-const PERSON_URN   = process.env.LINKEDIN_PERSON_URN;
+const ACCESS_TOKEN = (process.env.LINKEDIN_ACCESS_TOKEN || '').trim();
+const PERSON_URN   = (process.env.LINKEDIN_PERSON_URN || '').trim();
 const SITE_URL     = process.env.SITE_URL || 'https://roncaredaily-ie.netlify.app/';
 
 if (!ACCESS_TOKEN || !PERSON_URN) {
