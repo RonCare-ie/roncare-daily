@@ -40,7 +40,7 @@ const match    = postHtml.match(/<p class="article-beginning">([\s\S]*?)<\/p>/);
 const rawText  = match ? match[1].replace(/<[^>]+>/g, '') : '';
 const preview  = rawText.length > 300 ? rawText.slice(0, 297) + '…' : rawText;
 
-const shareText = `📰 RonCare Daily — ${heading}\n\n${preview}\n\nRead the full briefing →`;
+const shareText = `📰 RonCare Daily — ${heading}\n\n${preview}\n\nRead the full briefing → ${postUrl}`;
 
 const body = {
   author: `urn:li:person:${PERSON_URN}`,
@@ -50,13 +50,6 @@ const body = {
     feedDistribution: 'MAIN_FEED',
     targetEntities: [],
     thirdPartyDistributionChannels: [],
-  },
-  content: {
-    article: {
-      source: postUrl,
-      title: `RonCare Daily — ${heading}`,
-      description: preview,
-    },
   },
   lifecycleState: 'PUBLISHED',
   isReshareDisabledByAuthor: false,
