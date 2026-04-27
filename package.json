@@ -1,7 +1,7 @@
 {
   "name": "roncare-daily",
   "version": "1.0.0",
-  "description": "Automated daily news briefing for family carers, powered by Anthropic AI",
+  "description": "Automated news briefing for family carers (Mon/Wed/Fri/Sun), powered by Anthropic AI",
   "type": "module",
   "scripts": {
     "generate": "node generate.js",

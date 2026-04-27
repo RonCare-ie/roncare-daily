@@ -107,17 +107,20 @@ a.site-name:hover { color: #B8430A; }
 
 /* ── Topic sections ── */
 
-.topic {
+.topic,
+.topic-section {
   margin-bottom: 3rem;
   padding-bottom: 3rem;
   border-bottom: 1px solid var(--border);
 }
 
-.topic:last-of-type {
+.topic:last-of-type,
+.topic-section:last-of-type {
   border-bottom: none;
 }
 
-.topic h2 {
+.topic h2,
+.topic-section h2 {
   font-family: var(--font-sans);
   font-size: 1.25rem;
   font-weight: 700;
@@ -301,5 +304,6 @@ footer a:hover { color: var(--accent-hover); }
   body           { font-size: 17px; }
   header         { margin-bottom: 2rem; }
   .post-meta h1  { font-size: 1.625rem; }
-  .topic         { margin-bottom: 2.25rem; padding-bottom: 2.25rem; }
+  .topic,
+  .topic-section { margin-bottom: 2.25rem; padding-bottom: 2.25rem; }
 }

@@ -11,6 +11,17 @@ const __dirname  = path.dirname(__filename);
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// ─── Shared writing guidelines ─────────────────────────────────────────────
+
+const WRITING_GUIDELINES = `
+Writing guidelines — follow these carefully:
+- Tone: warm, friendly, and human. Write as if talking to a friend who cares for a loved one. Avoid clinical or corporate language.
+- Length: each paragraph should be 3–4 sentences maximum. Keep it readable and engaging — people should finish the article, not feel overwhelmed.
+- Avoid AI filler phrases like "It's worth noting", "It's important to highlight", "In conclusion", "Furthermore", "Delve into", "Comprehensive", or "Facilitate". Write naturally.
+- Be specific and factual — include real names, organisations, and figures. Do not invent or estimate statistics.
+- Use plain English. Short sentences. Active voice where possible.
+`;
+
 // ─── Topics ────────────────────────────────────────────────────────────────
 
 const TOPICS = [
@@ -24,12 +35,12 @@ Write a structured news article with the following three parts:
 
 BEGINNING — One paragraph that sets the scene: what is happening right now in this space and why it matters today.
 
-MIDDLE — Two or three paragraphs covering the key recent developments in detail. Be specific — include organisation names, countries, statistics, and real-world examples. Each paragraph should cover a distinct development or angle.
+MIDDLE — Two or three paragraphs covering the key recent developments. Be specific — include organisation names, countries, statistics, and real-world examples. Each paragraph covers a distinct development.
 
-END — One paragraph that draws it together: what does this mean going forward? What should readers watch for?
+END — One paragraph that draws it together: what does this mean going forward?
 
 Then list 2–4 source links you found.
-
+${WRITING_GUIDELINES}
 Return ONLY valid JSON in this exact format, with no other text:
 {
   "beginning": "Opening paragraph as a string.",
@@ -48,14 +59,14 @@ Return ONLY valid JSON in this exact format, with no other text:
 
 Write a structured news article with the following three parts:
 
-BEGINNING — One paragraph that sets the scene: what is happening right now in this space and why it matters today.
+BEGINNING — One paragraph that sets the scene: what is happening right now and why it matters today.
 
-MIDDLE — Two or three paragraphs covering the key recent developments in detail. Include policy responses, funding figures, workforce data, or reform proposals. Be specific with countries, statistics, and named organisations.
+MIDDLE — Two or three paragraphs covering the key recent developments. Include policy responses, funding figures, workforce data, or reform proposals. Be specific with countries, statistics, and named organisations.
 
-END — One paragraph that draws it together: what does this mean for families, carers, and policymakers going forward?
+END — One paragraph that draws it together: what does this mean for families, carers, and policymakers?
 
 Then list 2–4 source links you found.
-
+${WRITING_GUIDELINES}
 Return ONLY valid JSON in this exact format, with no other text:
 {
   "beginning": "Opening paragraph as a string.",
@@ -74,14 +85,14 @@ Return ONLY valid JSON in this exact format, with no other text:
 
 Write a structured news article with the following three parts:
 
-BEGINNING — One paragraph that sets the scene: what is the current situation for family carers, and what recent development or story brings this into focus today?
+BEGINNING — One paragraph that sets the scene: what is the current situation for family carers, and what recent development brings this into focus today?
 
-MIDDLE — Two or three paragraphs covering practical information, resources, or recent developments that would genuinely help someone who is currently caring for a loved one. Cover things like financial entitlements, mental health support, respite care, advocacy news, or community initiatives. Be specific and empathetic.
+MIDDLE — Two or three paragraphs covering practical information or resources that would genuinely help someone caring for a loved one. Cover things like financial entitlements, mental health support, respite care, advocacy news, or community initiatives. Be specific and empathetic.
 
-END — One paragraph that closes with encouragement and a clear takeaway: one concrete thing a carer reading this could do or be aware of.
+END — One paragraph that closes with warmth and a clear takeaway: one concrete thing a carer reading this could do or be aware of.
 
 Then list 2–4 source links you found.
-
+${WRITING_GUIDELINES}
 Return ONLY valid JSON in this exact format, with no other text:
 {
   "beginning": "Opening paragraph as a string.",
@@ -94,20 +105,30 @@ Return ONLY valid JSON in this exact format, with no other text:
   },
 ];
 
-// ─── Pick today's topic by rotating through the three ──────────────────────
+// ─── Parse JSON from API response ──────────────────────────────────────────
 
-function getTodaysTopic(date) {
-  const start   = new Date(date.getFullYear(), 0, 0);
-  const diff    = date - start;
-  const oneDay  = 1000 * 60 * 60 * 24;
-  const dayOfYear = Math.floor(diff / oneDay);
-  return TOPICS[dayOfYear % TOPICS.length];
+function parseContent(text) {
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        beginning: String(parsed.beginning || '').trim(),
+        middle:    Array.isArray(parsed.middle) ? parsed.middle.map(p => String(p).trim()) : [],
+        end:       String(parsed.end || '').trim(),
+        links:     Array.isArray(parsed.links) ? parsed.links.filter(l => l.title && l.url) : [],
+      };
+    }
+  } catch {
+    // fall through
+  }
+  return null;
 }
 
-// ─── Anthropic API call ─────────────────────────────────────────────────────
+// ─── Step 1: Generate one section with web search ─────────────────────────
 
 async function generateArticle(topic) {
-  console.log(`  → ${topic.heading}...`);
+  console.log(`  → Generating: ${topic.heading}...`);
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -121,22 +142,67 @@ async function generateArticle(topic) {
     .map(b => b.text)
     .join('');
 
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        beginning: String(parsed.beginning || '').trim(),
-        middle:    Array.isArray(parsed.middle) ? parsed.middle.map(p => String(p).trim()) : [],
-        end:       String(parsed.end || '').trim(),
-        links:     Array.isArray(parsed.links) ? parsed.links.filter(l => l.title && l.url) : [],
-      };
+  const parsed = parseContent(text);
+  if (parsed) return parsed;
+
+  console.warn(`  ⚠  Could not parse JSON for "${topic.heading}" — using raw text`);
+  return { beginning: text.trim(), middle: [], end: '', links: [] };
+}
+
+// ─── Step 2: Review and fix one section before publishing ─────────────────
+
+async function reviewArticle(topic, content) {
+  console.log(`  → Reviewing: ${topic.heading}...`);
+
+  const draft = JSON.stringify(content, null, 2);
+
+  const reviewPrompt = `You are an editor for RonCare Daily, a newsletter for family carers. Review the article draft below and fix any issues before it is published.
+
+Check for and correct:
+1. AI-sounding filler phrases ("It's worth noting", "It's important to highlight", "In conclusion", "Furthermore", "Delve into", "Comprehensive", "Facilitate", "Underscore", "Navigate") — rewrite naturally.
+2. Paragraphs that are too long (more than 4 sentences) — split them.
+3. Stiff, cold, or corporate tone — make it warmer and more human.
+4. Any factual inconsistencies within the article itself (e.g. a statistic mentioned twice with different values, contradictory statements).
+5. Repetitive sentence structures or words used too close together.
+
+Do NOT add new facts, change real names or statistics, or add content that wasn't in the original. Only improve the writing quality and fix errors.
+
+Article topic: ${topic.heading}
+
+Draft:
+${draft}
+
+Return ONLY the corrected article as valid JSON in this exact format, with no other text:
+{
+  "beginning": "Corrected opening paragraph.",
+  "middle": ["Corrected paragraph 1.", "Corrected paragraph 2.", "Corrected paragraph 3 (if present)."],
+  "end": "Corrected closing paragraph.",
+  "links": [
+    {"title": "Article title", "url": "https://url.com"}
+  ]
+}`;
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 2048,
+    messages: [{ role: 'user', content: reviewPrompt }],
+  });
+
+  const text = response.content
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('');
+
+  const reviewed = parseContent(text);
+  if (reviewed) {
+    if (reviewed.links.length === 0 && content.links.length > 0) {
+      reviewed.links = content.links;
     }
-  } catch {
-    console.warn(`  ⚠  Could not parse JSON — using raw text`);
+    return reviewed;
   }
 
-  return { beginning: text.trim(), middle: [], end: '', links: [] };
+  console.warn(`  ⚠  Review returned unparseable content for "${topic.heading}" — keeping original draft`);
+  return content;
 }
 
 // ─── HTML helpers ────────────────────────────────────────────────────────────
@@ -161,41 +227,51 @@ function formatShortDate(date) {
   });
 }
 
-function articleBodyHTML(content) {
+function sectionHTML(topic, content) {
   const middleHTML = content.middle
-    .map(p => `      <p>${escapeHtml(p)}</p>`)
+    .map(p => `        <p>${escapeHtml(p)}</p>`)
     .join('\n');
 
   const linksHTML = content.links.length > 0
-    ? `\n      <div class="sources">
-        <h3>Sources</h3>
-        <ul>
-          ${content.links.map(l =>
-            `<li><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.title)}</a></li>`
-          ).join('\n          ')}
-        </ul>
-      </div>`
+    ? `\n        <div class="sources">
+          <h3>Sources</h3>
+          <ul>
+            ${content.links.map(l =>
+              `<li><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.title)}</a></li>`
+            ).join('\n            ')}
+          </ul>
+        </div>`
     : '';
 
-  return `      <p class="article-beginning">${escapeHtml(content.beginning)}</p>
+  return `      <section class="topic-section">
+        <h2>${escapeHtml(topic.heading)}</h2>
+        <p class="topic-tagline">${escapeHtml(topic.tagline)}</p>
+        <div class="article-body">
+        <p class="article-beginning">${escapeHtml(content.beginning)}</p>
 ${middleHTML}
-      <p class="article-end">${escapeHtml(content.end)}</p>${linksHTML}`;
+        <p class="article-end">${escapeHtml(content.end)}</p>${linksHTML}
+        </div>
+      </section>`;
 }
 
 // ─── Post page ───────────────────────────────────────────────────────────────
 
-function generatePostHTML(date, topic, content) {
+function generatePostHTML(date, sections) {
   const dateStr       = date.toISOString().split('T')[0];
   const formattedDate = formatDate(date);
+
+  const sectionsHTML = sections
+    .map(({ topic, content }) => sectionHTML(topic, content))
+    .join('\n\n');
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(topic.heading)} — RonCare Daily, ${formattedDate}</title>
-  <meta name="description" content="${escapeHtml(topic.tagline)} ${formattedDate}.">
-  <meta property="og:title" content="${escapeHtml(topic.heading)} — RonCare Daily">
+  <title>RonCare Daily — ${formattedDate}</title>
+  <meta name="description" content="RonCare Daily briefing for ${formattedDate}. AI in healthcare, the ageing crisis, and support for family carers.">
+  <meta property="og:title" content="RonCare Daily — ${formattedDate}">
   <meta property="og:type" content="article">
   <link rel="stylesheet" href="../styles.css">
 </head>
@@ -206,7 +282,7 @@ function generatePostHTML(date, topic, content) {
         <a href="../index.html" class="site-name">RonCare Daily</a>
         <p class="tagline">For those who care.</p>
       </div>
-      <img src="../icon.png" alt="RonCare" class="header-icon" >
+      <img src="../icon.png" alt="RonCare" class="header-icon">
     </div>
   </header>
 
@@ -214,12 +290,8 @@ function generatePostHTML(date, topic, content) {
     <article>
       <div class="post-meta">
         <time datetime="${dateStr}">${formattedDate}</time>
-        <h1>${escapeHtml(topic.heading)}</h1>
-        <p class="topic-tagline">${escapeHtml(topic.tagline)}</p>
       </div>
-      <div class="article-body">
-${articleBodyHTML(content)}
-      </div>
+${sectionsHTML}
     </article>
   </main>
 
@@ -229,7 +301,7 @@ ${articleBodyHTML(content)}
 
   <footer>
     <div class="container">
-      <p>RonCare Daily publishes automated daily briefings using AI-assisted research. Always verify information from original sources before acting on it.</p>
+      <p>RonCare Daily publishes AI-assisted briefings every Monday, Wednesday, Friday, and Sunday. Always verify information from original sources before acting on it.</p>
       <p><a href="../index.html">← All posts</a></p>
     </div>
   </footer>
@@ -239,9 +311,13 @@ ${articleBodyHTML(content)}
 
 // ─── Index / homepage ────────────────────────────────────────────────────────
 
-function generateIndexHTML(allPosts, latestTopic, latestContent) {
+function generateIndexHTML(allPosts, latestSections) {
   const today         = allPosts[0];
   const formattedDate = formatDate(today.date);
+
+  const sectionsHTML = latestSections
+    .map(({ topic, content }) => sectionHTML(topic, content))
+    .join('\n\n');
 
   const archiveHTML = allPosts.length > 1
     ? `\n  <aside class="archive">
@@ -249,7 +325,7 @@ function generateIndexHTML(allPosts, latestTopic, latestContent) {
       <h2>Previous Briefings</h2>
       <ul>
         ${allPosts.slice(1).map(p =>
-          `<li><a href="posts/${p.dateStr}.html"><span class="archive-date">${formatShortDate(p.date)}</span> <span class="archive-topic">${escapeHtml(p.topicHeading)}</span></a></li>`
+          `<li><a href="posts/${p.dateStr}.html"><span class="archive-date">${formatShortDate(p.date)}</span></a></li>`
         ).join('\n        ')}
       </ul>
     </div>
@@ -262,7 +338,7 @@ function generateIndexHTML(allPosts, latestTopic, latestContent) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RonCare Daily — News &amp; Resources for Family Carers</title>
-  <meta name="description" content="A free daily briefing for family carers. Covering AI in healthcare, the ageing population crisis, and practical support resources for carers across Europe. Updated every morning.">
+  <meta name="description" content="A free briefing for family carers every Monday, Wednesday, Friday and Sunday. Covering AI in healthcare, the ageing population crisis, and practical support resources for carers across Europe.">
   <meta property="og:title" content="RonCare Daily — News &amp; Resources for Family Carers">
   <meta property="og:type" content="website">
   <link rel="stylesheet" href="styles.css">
@@ -274,25 +350,21 @@ function generateIndexHTML(allPosts, latestTopic, latestContent) {
         <span class="site-name">RonCare Daily</span>
         <p class="tagline">For those who care.</p>
       </div>
-      <img src="icon.png" alt="RonCare" class="header-icon" >
+      <img src="icon.png" alt="RonCare" class="header-icon">
     </div>
   </header>
 
   <main class="container">
     <div class="post-meta">
       <time datetime="${today.dateStr}">${formattedDate}</time>
-      <h1>${escapeHtml(latestTopic.heading)}</h1>
-      <p class="topic-tagline">${escapeHtml(latestTopic.tagline)}</p>
     </div>
-    <div class="article-body">
-${articleBodyHTML(latestContent)}
-    </div>
+${sectionsHTML}
   </main>
 ${archiveHTML}
 
   <footer>
     <div class="container">
-      <p>RonCare Daily publishes automated daily briefings using AI-assisted research. Always verify information from original sources.</p>
+      <p>RonCare Daily publishes AI-assisted briefings every Monday, Wednesday, Friday, and Sunday. Always verify information from original sources.</p>
     </div>
   </footer>
 </body>
@@ -309,10 +381,9 @@ async function main() {
 
   const today   = new Date();
   const dateStr = today.toISOString().split('T')[0];
-  const topic   = getTodaysTopic(today);
 
   console.log(`\nRonCare Daily — ${dateStr}`);
-  console.log(`Topic: ${topic.heading}\n`);
+  console.log(`Generating all 3 sections...\n`);
 
   const postsDir = path.join(__dirname, 'posts');
   if (!fs.existsSync(postsDir)) fs.mkdirSync(postsDir, { recursive: true });
@@ -323,29 +394,34 @@ async function main() {
     return;
   }
 
-  const content = await generateArticle(topic);
+  // Generate all three sections sequentially (web search tool requires sequential calls)
+  const sections = [];
+  for (const topic of TOPICS) {
+    const draft   = await generateArticle(topic);
+    const content = await reviewArticle(topic, draft);
+    sections.push({ topic, content });
+  }
 
   // Write dated post
-  fs.writeFileSync(postPath, generatePostHTML(today, topic, content), 'utf8');
-  console.log(`✓  Post written: posts/${dateStr}.html`);
+  fs.writeFileSync(postPath, generatePostHTML(today, sections), 'utf8');
+  console.log(`\n✓  Post written: posts/${dateStr}.html`);
 
-  // Gather all posts for archive
+  // Update archive index
   const metaPath = path.join(__dirname, 'posts-meta.json');
   const meta = fs.existsSync(metaPath) ? JSON.parse(fs.readFileSync(metaPath, 'utf8')) : {};
-  meta[dateStr] = { topicHeading: topic.heading };
+  meta[dateStr] = {};
   fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf8');
 
   const allPosts = Object.entries(meta)
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([ds, m]) => ({
+    .map(([ds]) => ({
       dateStr: ds,
       date: new Date(ds + 'T07:00:00'),
-      topicHeading: m.topicHeading,
     }));
 
   fs.writeFileSync(
     path.join(__dirname, 'index.html'),
-    generateIndexHTML(allPosts, topic, content),
+    generateIndexHTML(allPosts, sections),
     'utf8',
   );
   console.log('✓  index.html updated\n');
