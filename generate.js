@@ -400,6 +400,10 @@ async function main() {
     const draft   = await generateArticle(topic);
     const content = await reviewArticle(topic, draft);
     sections.push({ topic, content });
+    if (sections.length < TOPICS.length) {
+      console.log('  ⏳ Pausing 60s to stay within rate limits...');
+      await new Promise(r => setTimeout(r, 60000));
+    }
   }
 
   // Write dated post

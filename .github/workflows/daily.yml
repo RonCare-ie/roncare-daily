@@ -38,6 +38,3 @@ jobs:
           git pull --rebase origin main
           git push origin main
 
-      - name: Trigger Netlify deploy
-        run: curl -s -X POST ${{ secrets.NETLIFY_DEPLOY_HOOK }}
-
