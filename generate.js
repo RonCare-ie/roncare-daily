@@ -22,7 +22,51 @@ Writing guidelines — follow these carefully:
 - Use plain English. Short sentences. Active voice where possible.
 `;
 
-// ─── Topics ────────────────────────────────────────────────────────────────
+// ─── Step 0: Discover today's fresh headings via web search ───────────────
+
+async function discoverTopics() {
+  console.log('  → Discovering today\'s news topics...');
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1024,
+    tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+    messages: [{
+      role: 'user',
+      content: `Using web search, find the most relevant news stories from today or the past 24–48 hours across these three care-related areas:
+1. AI or technology in healthcare administration or care coordination
+2. Population ageing, elderly care policy, or care system pressures in Europe/UK/Ireland
+3. Support, resources, or news for unpaid family carers in Ireland or the UK
+
+For each area, return a specific, newsworthy article heading and a one-sentence tagline based on what is actually in the news today — not generic titles.
+
+Return ONLY valid JSON, no other text:
+{
+  "topics": [
+    {"id": "ai-healthcare", "heading": "Specific headline based on today's news", "tagline": "One sentence tagline"},
+    {"id": "ageing-crisis", "heading": "Specific headline based on today's news", "tagline": "One sentence tagline"},
+    {"id": "carer-resources", "heading": "Specific headline based on today's news", "tagline": "One sentence tagline"}
+  ]
+}`,
+    }],
+  });
+
+  const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  try {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (parsed.topics && parsed.topics.length === 3) {
+        console.log('  ✓ Fresh topics discovered');
+        return parsed.topics;
+      }
+    }
+  } catch { /* fall through */ }
+  console.warn('  ⚠ Could not parse topics — using default headings');
+  return null;
+}
+
+// ─── Topics (fallback defaults) ────────────────────────────────────────────
 
 const TOPICS = [
   {
@@ -394,9 +438,17 @@ async function main() {
     return;
   }
 
+  // Step 0: Discover fresh headings from today's news
+  const freshTopics = await discoverTopics();
+  const topics = TOPICS.map((t, i) =>
+    freshTopics ? { ...t, heading: freshTopics[i].heading, tagline: freshTopics[i].tagline } : t
+  );
+  console.log('  ⏳ Pausing 30s after topic discovery...');
+  await new Promise(r => setTimeout(r, 30000));
+
   // Generate all three sections sequentially (web search tool requires sequential calls)
   const sections = [];
-  for (const topic of TOPICS) {
+  for (const topic of topics) {
     const draft   = await generateArticle(topic);
     const content = await reviewArticle(topic, draft);
     sections.push({ topic, content });
