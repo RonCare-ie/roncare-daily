@@ -1,0 +1,35 @@
+name: Generate Briefing
+
+on:
+  schedule:
+    - cron: '0 7 * * 0,1,3,5'
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Run generator
+        run: node generate.js --force
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Push changes
+        run: |
+          git config user.name "RonCare Bot"
+          git config user.email "bot@roncare.ie"
+          git add -A
+          git diff --staged --quiet && exit 0
+          git commit -m "Briefing $(date +%Y-%m-%d)"
+          git push origin HEAD:main --force

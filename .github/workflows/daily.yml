@@ -1,36 +1,8 @@
-name: Newsletter
+name: Newsletter (disabled)
 
 on:
-  schedule:
-    - cron: '0 7 * * 1,3,5,0'
   workflow_dispatch:
-
-jobs:
-  generate:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - run: npm ci
-
-      - name: Generate today's briefing
-        run: node generate.js
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Commit and push
-        run: |
-          git config user.name "RonCare Daily Bot"
-          git config user.email "bot@roncare.ie"
-          git add index.html posts/ posts-meta.json
-          git diff --staged --quiet && echo "Nothing to commit" && exit 0
-          git commit -m "Daily briefing $(date +%Y-%m-%d)"
-          git push origin main --force
+    inputs:
+      disabled:
+        description: 'This workflow is disabled. Use Generate Briefing instead.'
+        required: false
