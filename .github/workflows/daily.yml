@@ -13,8 +13,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -32,9 +30,7 @@ jobs:
         run: |
           git config user.name "RonCare Daily Bot"
           git config user.email "bot@roncare.ie"
-          git config pull.rebase false
           git add index.html posts/ posts-meta.json
           git diff --staged --quiet && echo "Nothing to commit" && exit 0
           git commit -m "Daily briefing $(date +%Y-%m-%d)"
-          git push origin main --force-with-lease
-
+          git push origin main --force
