@@ -35,6 +35,7 @@ jobs:
           git add index.html posts/ posts-meta.json
           git diff --staged --quiet && echo "Nothing to commit" && exit 0
           git commit -m "Daily briefing $(date +%Y-%m-%d)"
-          git pull origin main --no-rebase -X ours
+          git fetch origin main
+          git merge FETCH_HEAD -X ours --no-edit
           git push origin main
 
