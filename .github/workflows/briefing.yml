@@ -33,3 +33,9 @@ jobs:
           git diff --staged --quiet && exit 0
           git commit -m "Briefing $(date +%Y-%m-%d)"
           git push origin HEAD:main --force
+
+      - name: Deploy to Vercel
+        run: npx vercel deploy --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: team_BwyZ3wBfG3O4t6WdSSuzaUEr
+          VERCEL_PROJECT_ID: prj_PcEKDZy6Kf596blPXhnRcEHidWtp
