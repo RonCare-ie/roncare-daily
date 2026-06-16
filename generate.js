@@ -458,6 +458,7 @@ ${navHTML('../icon.png')}
     <article>
       <div class="post-meta">
         <time datetime="${dateStr}">${formattedDate}</time>
+        <h1>Today's Briefing</h1>
       </div>
 ${sectionsHTML}
     </article>
@@ -518,6 +519,7 @@ ${navHTML('icon.png')}
   <main class="container">
     <div class="post-meta">
       <time datetime="${today.dateStr}">${formattedDate}</time>
+      <h1>Today's Briefing</h1>
     </div>
 ${sectionsHTML}
   </main>
