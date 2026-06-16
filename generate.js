@@ -45,7 +45,8 @@ Return ONLY valid JSON, no other text:
   "topics": [
     {"id": "ai-healthcare", "heading": "Specific headline based on today's news", "tagline": "One sentence tagline"},
     {"id": "ageing-crisis", "heading": "Specific headline based on today's news", "tagline": "One sentence tagline"},
-    {"id": "carer-resources", "heading": "Specific headline based on today's news", "tagline": "One sentence tagline"}
+    {"id": "carer-resources", "heading": "Specific headline based on today's news", "tagline": "One sentence tagline"},
+    {"id": "roncare-spotlight", "heading": "A compelling human-interest headline about Irish family carers", "tagline": "One sentence tagline"}
   ]
 }`,
     }],
@@ -56,7 +57,7 @@ Return ONLY valid JSON, no other text:
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      if (parsed.topics && parsed.topics.length === 3) {
+      if (parsed.topics && parsed.topics.length === 4) {
         console.log('  ✓ Fresh topics discovered');
         return parsed.topics;
       }
@@ -65,6 +66,59 @@ Return ONLY valid JSON, no other text:
   console.warn('  ⚠ Could not parse topics — using default headings');
   return null;
 }
+
+// ─── RonCare verified facts (sourced from internal research doc) ─────────────
+
+const RONCARE_FACTS = `
+VERIFIED IRISH CARER STATISTICS (sourced from RonCare research, 2019–2025):
+
+Population & scale:
+- 500,000+ people in Ireland provide unpaid family care; Census 2022 recorded 299,000 self-identified carers, up 53% since 2016
+- 14% of Irish population identifies as a carer (2024), up from 9% in 2019
+- Those aged 45–54 are most likely to be caring (23%)
+- Ireland has the fastest-ageing population in Europe; 65+ population grew 37% since 2015, projected to double by 2051
+- Family carers save the State an estimated €20 billion per year
+
+The hours & toll:
+- Average carer provides 38.7 hours of care per week — a full-time job without pay
+- 29% provide 43+ hours per week (up from 21% in 2016)
+- 67% of Irish carers have been diagnosed or treated for a physical health condition; 40% have a back injury from caring
+- 48% of Irish family carers diagnosed with a mental health condition; 35% with depression, 39% with anxiety
+- 72% of family carers have never accessed respite care
+- 44% of carers experience physical or emotional harm as part of their caring role
+
+Entitlements (what carers often don't know):
+- Carer's Allowance: ~€270/week, means-tested; you can work up to 18.5 hours/week and still qualify
+- Income disregard increasing to €1,000/week (single) and €2,000/week (couple) from July 2026 — far more people will qualify
+- Carer's Benefit: PRSI-based, not means-tested; extended to self-employed from January 2025; payable up to 104 weeks
+- Carer's Support Grant: €2,000 tax-free annual payment, paid automatically each June
+- Additional: Free Travel Pass, Household Benefits Package, Free GP Visit Card, Fuel Allowance
+- Carer's Leave: up to 104 weeks unpaid leave; employer must keep your job open
+- Apply via: citizensinformation.ie or welfare.ie (form CR1)
+
+The sandwich generation:
+- People aged 50–59 are the group most likely to be providing regular care in Ireland
+- Ireland's old-age dependency ratio projected to reach 50 by 2057 (one older person per two working-age adults)
+- Up to 13% of Irish adolescents and young adults are also carers — most don't tell anyone
+- Young carers are 3.6 times more likely to be depressed than their peers
+
+HSE & system:
+- 23.76 million hours of home support delivered in 2024 (12.5% increase since 2022)
+- Home support budget up 70% between 2020 and 2024
+- 5,556 people currently on the waiting list for home care
+- 50%+ of nurses in Ireland are foreign-trained (OECD 2024)
+- In March 2025, Ireland added 1,000 General Employment Permits specifically for care workers
+
+Gender gap:
+- 34% of women do most or all of care for their main recipient, vs 19% of men
+- 80% of long-term care across the EU is provided informally, majority by women
+- Economic cost of gender care gap: €147–220 billion per year across Europe
+
+After caring:
+- 20% of bereaved carers develop complicated grief, persistent depression, or significant psychiatric symptoms
+- Many carers lose their sense of identity and purpose after the person they cared for dies
+- Depressive symptoms typically peak within 3 months of bereavement but can take 15+ months to return to baseline
+`;
 
 // ─── Topics (fallback defaults) ────────────────────────────────────────────
 
@@ -157,6 +211,44 @@ Return ONLY valid JSON in this exact format, with no other text:
   "links": [
     {"title": "Full article title", "url": "https://actual-url.com/article"}
   ]
+}`,
+  },
+  {
+    id: 'roncare-spotlight',
+    heading: 'The RonCare Spotlight',
+    tagline: 'Real facts, real people — shining a light on the hidden world of family caring in Ireland',
+    prompt: `You are writing for RonCare Daily, a blog for family carers in Ireland run by RonCare (roncare.ie) — a care coordination app built for families managing care at home.
+
+Using the verified Irish carer statistics below, write an article that shines a light on ONE of these angles — choose whichever feels most timely, relevant, or underreported:
+- The sandwich generation (people caring for elderly parents while raising their own children)
+- What carers are actually entitled to in Ireland (most don't know)
+- The mental health toll of caring
+- The physical toll of caring
+- Young carers in Ireland (up to 13% of adolescents)
+- Life after caring — what happens when the person you cared for passes away
+- The gender care gap in Ireland and Europe
+- The scale of home care and why the system is under pressure
+- The €20 billion unpaid carers save the Irish State every year
+
+VERIFIED FACTS TO DRAW FROM:
+${RONCARE_FACTS}
+
+Write a structured article with the following three parts:
+
+BEGINNING — One paragraph that opens with a striking fact or human truth from the stats above. Make it personal and real.
+
+MIDDLE — Two or three paragraphs that go deeper into the chosen angle. Use the specific figures above — don't search the web, use what's provided. Explain what it means for real families in Ireland.
+
+END — One warm, practical closing paragraph. Mention RonCare naturally (not as an ad — as a tool that exists for exactly this reason). Link to roncare.ie.
+
+Do NOT include source links — the facts are already verified.
+${WRITING_GUIDELINES}
+Return ONLY valid JSON in this exact format, with no other text:
+{
+  "beginning": "Opening paragraph as a string.",
+  "middle": ["First body paragraph.", "Second body paragraph.", "Third body paragraph (optional)."],
+  "end": "Closing paragraph as a string.",
+  "links": []
 }`,
   },
 ];
