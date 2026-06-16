@@ -415,7 +415,7 @@ function navHTML(iconSrc) {
   <nav style="background:#F5EDE3;border-bottom:1px solid #e0d4c4;position:sticky;top:0;z-index:50;font-family:Georgia,serif;">
     <div style="max-width:1024px;margin:0 auto;padding:0 20px;height:64px;display:flex;align-items:center;justify-content:space-between;">
       <a href="https://www.roncare.ie/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
-        <img src="${iconSrc}" alt="RonCare" style="height:36px;width:36px;">
+        <img src="${iconSrc}" alt="RonCare" style="height:44px;width:44px;">
         <span style="font-size:18px;font-weight:700;color:#C15A2E;letter-spacing:0.03em;">RonCare</span>
       </a>
       <div style="display:flex;gap:32px;align-items:center;">
