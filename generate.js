@@ -304,16 +304,22 @@ async function reviewArticle(topic, content) {
 
   const draft = JSON.stringify(content, null, 2);
 
-  const reviewPrompt = `You are an editor for RonCare Daily, a newsletter for family carers. Review the article draft below and fix any issues before it is published.
+  const reviewPrompt = `You are an editor for RonCare Daily, a newsletter for family carers in Ireland. Review the article draft below and fix any issues before it is published.
 
-Check for and correct:
-1. AI-sounding filler phrases ("It's worth noting", "It's important to highlight", "In conclusion", "Furthermore", "Delve into", "Comprehensive", "Facilitate", "Underscore", "Navigate") — rewrite naturally.
-2. Paragraphs that are too long (more than 4 sentences) — split them.
-3. Stiff, cold, or corporate tone — make it warmer and more human.
-4. Any factual inconsistencies within the article itself (e.g. a statistic mentioned twice with different values, contradictory statements).
-5. Repetitive sentence structures or words used too close together.
+FACT-CHECKING (most important — do these first):
+1. Every statistic must have a named source (e.g. "Family Carers Ireland", "HSE", "Citizens Information", "CSO"). If a stat has no source, remove it.
+2. Remove any figure that seems invented, estimated, or vague (e.g. "studies show", "experts say", "many carers"). Only keep what can be traced to a real organisation.
+3. Check that no two statistics in the article contradict each other.
+4. Source links must be real, specific URLs — not homepages. If a link looks generic or invented, remove it.
+5. Irish-specific content only: remove any statistics that are not from Ireland, the UK, or the EU. Do not mix in US figures.
 
-Do NOT add new facts, change real names or statistics, or add content that wasn't in the original. Only improve the writing quality and fix errors.
+WRITING QUALITY:
+6. Remove AI filler phrases: "It's worth noting", "It's important to highlight", "In conclusion", "Furthermore", "Delve into", "Comprehensive", "Facilitate", "Underscore", "Navigate" — rewrite naturally.
+7. Split any paragraph longer than 4 sentences.
+8. Warm, human tone — write as if talking to a friend, not publishing a press release.
+9. No repetitive sentence structures or repeated words close together.
+
+Do NOT add new facts or change verified statistics. Only improve quality and remove unverifiable claims.
 
 Article topic: ${topic.heading}
 
