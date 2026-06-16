@@ -28,7 +28,7 @@ async function discoverTopics() {
   console.log('  → Discovering today\'s news topics...');
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
     tools: [{ type: 'web_search_20250305', name: 'web_search' }],
     messages: [{
@@ -125,15 +125,27 @@ Return ONLY valid JSON in this exact format, with no other text:
     id: 'carer-resources',
     heading: 'Support & Community for Family Carers',
     tagline: 'Resources, guidance, and solidarity for those caring for a loved one across Europe',
-    prompt: `Using web search, find recent news, practical resources, and supportive guidance from today or the past 72 hours related to unpaid family carers in Europe, particularly in Ireland and the UK.
+    prompt: `Using web search, find recent news, practical resources, and supportive guidance from today or the past 72 hours related to unpaid family carers in Ireland and the UK.
+
+This article must be specifically useful to family carers in Ireland. Address at least one of the following real questions Irish carers search for:
+- How much does a full time carer cost in Ireland?
+- What is the carer's allowance in Ireland and what is the current rate?
+- Can my mum pay me to look after her?
+- What is the HSE home care package and who is entitled to it?
+- What can carers get for free in Ireland?
+- How much does an overnight carer cost in Ireland?
+- What is the carer's support grant?
+- How much money can you have in the bank and still get carer's allowance?
+- Do dementia patients do better at home or in a nursing home?
+- How to apply for home help in Ireland?
 
 Write a structured news article with the following three parts:
 
-BEGINNING — One paragraph that sets the scene: what is the current situation for family carers, and what recent development brings this into focus today?
+BEGINNING — One paragraph that sets the scene: what is the current situation for family carers in Ireland, and what recent development brings this into focus today?
 
-MIDDLE — Two or three paragraphs covering practical information or resources that would genuinely help someone caring for a loved one. Cover things like financial entitlements, mental health support, respite care, advocacy news, or community initiatives. Be specific and empathetic.
+MIDDLE — Two or three paragraphs covering practical information or entitlements that would genuinely help someone caring for a loved one in Ireland. Be specific: include figures, HSE/Citizens Information links, and real-world examples.
 
-END — One paragraph that closes with warmth and a clear takeaway: one concrete thing a carer reading this could do or be aware of.
+END — One paragraph that closes with warmth and a clear takeaway: one concrete thing an Irish carer reading this could do today.
 
 Then list 2–4 source links you found.
 ${WRITING_GUIDELINES}
@@ -227,7 +239,7 @@ Return ONLY the corrected article as valid JSON in this exact format, with no ot
 }`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     messages: [{ role: 'user', content: reviewPrompt }],
   });
@@ -314,9 +326,10 @@ function generatePostHTML(date, sections) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RonCare Daily — ${formattedDate}</title>
-  <meta name="description" content="RonCare Daily briefing for ${formattedDate}. AI in healthcare, the ageing crisis, and support for family carers.">
+  <meta name="description" content="RonCare Daily briefing for ${formattedDate}. AI in healthcare, the ageing crisis, and support for family carers in Ireland.">
   <meta property="og:title" content="RonCare Daily — ${formattedDate}">
   <meta property="og:type" content="article">
+  <link rel="canonical" href="https://www.roncare.ie/blog/posts/${dateStr}.html">
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -382,9 +395,10 @@ function generateIndexHTML(allPosts, latestSections) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RonCare Daily — News &amp; Resources for Family Carers</title>
-  <meta name="description" content="A free briefing for family carers every Monday, Wednesday, Friday and Sunday. Covering AI in healthcare, the ageing population crisis, and practical support resources for carers across Europe.">
-  <meta property="og:title" content="RonCare Daily — News &amp; Resources for Family Carers">
+  <meta name="description" content="A free briefing for family carers in Ireland every Monday, Wednesday, Friday and Sunday. Covering carer's allowance, HSE home care packages, respite care, and practical support.">
+  <meta property="og:title" content="RonCare Daily — News &amp; Resources for Family Carers in Ireland">
   <meta property="og:type" content="website">
+  <link rel="canonical" href="https://www.roncare.ie/blog/">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -480,7 +494,18 @@ async function main() {
     generateIndexHTML(allPosts, sections),
     'utf8',
   );
-  console.log('✓  index.html updated\n');
+  console.log('✓  index.html updated');
+
+  // Generate sitemap
+  const sitemapUrls = [
+    `  <url>\n    <loc>https://www.roncare.ie/blog/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>`,
+    ...allPosts.map(p =>
+      `  <url>\n    <loc>https://www.roncare.ie/blog/posts/${p.dateStr}.html</loc>\n    <lastmod>${p.dateStr}</lastmod>\n    <changefreq>never</changefreq>\n    <priority>0.8</priority>\n  </url>`
+    ),
+  ].join('\n');
+  const sitemapXML = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemapUrls}\n</urlset>`;
+  fs.writeFileSync(path.join(__dirname, 'sitemap.xml'), sitemapXML, 'utf8');
+  console.log('✓  sitemap.xml updated\n');
 }
 
 main().catch(err => {
