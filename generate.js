@@ -541,8 +541,14 @@ async function main() {
   const today   = new Date();
   const dateStr = today.toISOString().split('T')[0];
 
+  // Pick topic by day: Mon=AI, Wed=Ageing, Fri=Carer Resources, Sun=RonCare Spotlight
+  const dayMap = { 1: 0, 3: 1, 5: 2, 0: 3 };
+  const dayOfWeek = today.getUTCDay();
+  const topicIndex = dayMap[dayOfWeek] ?? 0;
+  const baseTopic = TOPICS[topicIndex];
+
   console.log(`\nRonCare Daily — ${dateStr}`);
-  console.log(`Generating all 3 sections...\n`);
+  console.log(`Topic: ${baseTopic.heading}\n`);
 
   const postsDir = path.join(__dirname, 'posts');
   if (!fs.existsSync(postsDir)) fs.mkdirSync(postsDir, { recursive: true });
@@ -553,25 +559,18 @@ async function main() {
     return;
   }
 
-  // Step 0: Discover fresh headings from today's news
+  // Discover a fresh heading for today's topic
   const freshTopics = await discoverTopics();
-  const topics = TOPICS.map((t, i) =>
-    freshTopics ? { ...t, heading: freshTopics[i].heading, tagline: freshTopics[i].tagline } : t
-  );
+  const topic = freshTopics
+    ? { ...baseTopic, heading: freshTopics[topicIndex].heading, tagline: freshTopics[topicIndex].tagline }
+    : baseTopic;
   console.log('  ⏳ Pausing 30s after topic discovery...');
   await new Promise(r => setTimeout(r, 30000));
 
-  // Generate all three sections sequentially (web search tool requires sequential calls)
-  const sections = [];
-  for (const topic of topics) {
-    const draft   = await generateArticle(topic);
-    const content = await reviewArticle(topic, draft);
-    sections.push({ topic, content });
-    if (sections.length < TOPICS.length) {
-      console.log('  ⏳ Pausing 60s to stay within rate limits...');
-      await new Promise(r => setTimeout(r, 60000));
-    }
-  }
+  // Generate and review one article
+  const draft   = await generateArticle(topic);
+  const content = await reviewArticle(topic, draft);
+  const sections = [{ topic, content }];
 
   // Write dated post
   fs.writeFileSync(postPath, generatePostHTML(today, sections), 'utf8');
